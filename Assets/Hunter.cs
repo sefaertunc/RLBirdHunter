@@ -22,6 +22,7 @@ public class Hunter : MonoBehaviour
     public float detectionDelay = 0.5f;  // Algýlama gecikmesi
     private Transform target;  // Hedef obje
     private bool isTargetInView;  // Hedefin görüþ alanýnda olup olmadýðýný kontrol eder
+    private bool hasTarget = false;  // Mevcut hedefin olup olmadýðýný kontrol eder
 
     void Update()
     {
@@ -62,6 +63,8 @@ public class Hunter : MonoBehaviour
 
     void DetectTargets()
     {
+        if (hasTarget) return; // Hedefimiz varken yeni hedef aramayýz
+
         Collider[] targetsInViewRadius = Physics.OverlapSphere(transform.position, viewDistance, targetMask);
 
         bool previousTargetInView = isTargetInView;
@@ -84,11 +87,13 @@ public class Hunter : MonoBehaviour
                         if (hit.transform.CompareTag(targetTag))
                         {
                             target = potentialTarget.transform;
+                            hasTarget = true;
                             if (!isTargetInView)
                             {
                                 isTargetInView = true;
                                 StartCoroutine(HandleTargetDetection());
                             }
+                            break; // Ýlk hedefi bulduðumuzda diðerlerini aramayý býrak
                         }
                     }
                     else
@@ -102,6 +107,7 @@ public class Hunter : MonoBehaviour
         if (!isTargetInView)
         {
             target = null;
+            hasTarget = false;
         }
     }
 
@@ -110,6 +116,26 @@ public class Hunter : MonoBehaviour
         yield return new WaitForSeconds(detectionDelay);
         while (isTargetInView)
         {
+            if (target == null || Vector3.Distance(transform.position, target.position) > viewDistance || Vector3.Angle(transform.forward, (target.position - transform.position).normalized) > viewAngle / 2)
+            {
+                isTargetInView = false; // Hedef alan dýþýna çýktý veya kaybedildi
+                target = null;
+                hasTarget = false;
+                yield break;
+            }
+
+            // Hedefin pozisyonuna doðru raycast çiz
+            Vector3 dirToTarget = (target.position - transform.position).normalized;
+            RaycastHit hit;
+            if (Physics.Raycast(transform.position, dirToTarget, out hit, viewDistance))
+            {
+                Debug.DrawLine(transform.position, hit.point, Color.red);
+            }
+            else
+            {
+                Debug.DrawLine(transform.position, transform.position + dirToTarget * viewDistance, Color.red);
+            }
+
             RotateTowardsTarget();
             yield return null;
         }
