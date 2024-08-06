@@ -15,6 +15,7 @@ public class Hunter : MonoBehaviour
     public int segments = 10;  // FOV segmentleri
     public LayerMask targetMask;  // Hedef katmaný
     public string targetTag = "bird";  // Hedef tag
+    public float gizmoAlpha = 0.5f; // Gizmos transparanlýk deðeri
 
     [Header("Rotation Variables")]
     public float rotationSpeed = 2f;  // Dönüþ hýzý
@@ -137,25 +138,24 @@ public class Hunter : MonoBehaviour
         if (isTargetInView)
             return; // Hedef görüþ alanýndayken gizmoslarý çizme
 
-        Gizmos.color = Color.yellow;
+        Color gizmoColor = new Color(0.7f, 1f, 0.7f, gizmoAlpha); // Sarý renk ve transparanlýk ayarý
+        Gizmos.color = gizmoColor;
 
         Vector3 startPosition = transform.position;
-        Vector3 startDirection = Quaternion.Euler(0, -viewAngle / 2, 0) * transform.forward;
-        Vector3 previousPoint = startPosition + startDirection * viewDistance;
-        float angleStep = viewAngle / segments;
 
-        for (int i = 1; i <= segments; i++)
+        // Draw the FOV as a 3D cone
+        for (int i = 0; i <= segments; i++)
         {
-            float currentAngle = -viewAngle / 2 + angleStep * i;
-            Vector3 nextDirection = Quaternion.Euler(0, currentAngle, 0) * transform.forward;
-            Vector3 nextPoint = startPosition + nextDirection * viewDistance;
+            float angle = -viewAngle / 2 + (viewAngle / segments) * i;
+            Vector3 direction = Quaternion.Euler(0, angle, 0) * transform.forward * viewDistance;
+            Gizmos.DrawLine(startPosition, startPosition + direction);
 
-            Gizmos.DrawLine(startPosition, previousPoint);
-            Gizmos.DrawLine(previousPoint, nextPoint);
-
-            previousPoint = nextPoint;
+            for (int j = 0; j <= segments; j++)
+            {
+                float verticalAngle = -viewAngle / 2 + (viewAngle / segments) * j;
+                Vector3 verticalDirection = Quaternion.Euler(verticalAngle, 0, 0) * direction;
+                Gizmos.DrawLine(startPosition, startPosition + verticalDirection);
+            }
         }
-
-        Gizmos.DrawLine(startPosition, previousPoint);
     }
 }
