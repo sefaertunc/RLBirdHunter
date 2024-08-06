@@ -130,6 +130,12 @@ public class Hunter : MonoBehaviour
             if (Physics.Raycast(transform.position, dirToTarget, out hit, viewDistance))
             {
                 Debug.DrawLine(transform.position, hit.point, Color.red);
+                // Kuþu kaçýr
+                Bird bird = target.GetComponent<Bird>();
+                if (bird != null)
+                {
+                    bird.Flee((target.position - transform.position).normalized);
+                }
             }
             else
             {
@@ -164,7 +170,7 @@ public class Hunter : MonoBehaviour
         if (isTargetInView)
             return; // Hedef görüþ alanýndayken gizmoslarý çizme
 
-        Color gizmoColor = new Color(0.7f, 1f, 0.7f, gizmoAlpha); // Sarý renk ve transparanlýk ayarý
+        Color gizmoColor = new Color(0.8f, 1f, 0.8f, gizmoAlpha); // Sarý renk ve transparanlýk ayarý
         Gizmos.color = gizmoColor;
 
         Vector3 startPosition = transform.position;
